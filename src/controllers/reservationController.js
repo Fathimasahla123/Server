@@ -1,25 +1,15 @@
 const Reservation = require("../models/reservationModel");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
-require("dotenv").config();
+// const bcrypt = require("bcryptjs");
+// const jwt = require("jsonwebtoken");
+// require("dotenv").config();
 
 const createReservation = async (req, res) => {
-  const {
-    customerName,
-    email,
-    phonenumber,
-    password,
-    date,
-    time,
-    guests,
-    specialRequests,
-  } = req.body;
-  const hashedPassword = await bcrypt.hash(password, 10);
+  const { customerName, phonenumber, date, time, guests, specialRequests } =
+    req.body;
+
   try {
     const reservation = new Reservation({
       customerName,
-      email,
-      password: hashedPassword,
       phonenumber,
       date,
       time,
