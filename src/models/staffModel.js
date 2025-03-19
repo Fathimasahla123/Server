@@ -3,9 +3,9 @@ const mongoose = require('mongoose');
 const staffSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  password: { type: Number, required: true},
-  phoneNumber: { type: String, required: true },
-  role: { type: String, enum: ['Manager', 'Chef', 'Waiter', 'Delivery'], required: true },
+  password: { type:String, required: true},
+  phoneNumber: { type: Number, required: true },
+  incharge: { type: String, enum: ['Manager', 'Chef', 'Waiter', 'Delivery'], required: true },
   tasks: [
     {
       taskName: { type: String, required: true },

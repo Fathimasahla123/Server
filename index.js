@@ -29,7 +29,8 @@ connectDB();
 
 // Import routers
 const authRoutes = require('./src/routes/authRoutes');
-const dashboardRoutes = require('./src/routes/dashboardRoutes');
+const adminRoutes = require('./src/routes/adminRoutes');
+//const dashboardRoutes = require('./src/routes/dashboardRoutes');
 const reservationRoutes = require('./src/routes/reservationRoutes');
 const orderRoutes = require('./src/routes/orderRoutes');
 const paymentRoutes = require('./src/routes/paymentRoutes');
@@ -45,7 +46,8 @@ app.use(express.json());
 
 // Routes
 app.use('/api/auth', authRoutes); // Login/Signup
-app.use('/api/dashboard', dashboardRoutes); // Role-based dashboards
+app.use('/api/admin',adminRoutes);
+//app.use('/api/dashboard', dashboardRoutes); // Role-based dashboards
 app.use('/api/reservations', reservationRoutes); // Reservations
 app.use('/api/orders', orderRoutes); // Orders
 app.use('/api/payments', paymentRoutes); // Payments
