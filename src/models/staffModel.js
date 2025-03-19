@@ -6,6 +6,7 @@ const staffSchema = new mongoose.Schema({
   password: { type:String, required: true},
   phoneNumber: { type: Number, required: true },
   incharge: { type: String, enum: ['Manager', 'Chef', 'Waiter', 'Delivery'], required: true },
+  role: {type: String, enum: ["Customer", "Staff", "Admin"],default: "Staff" },
   tasks: [
     {
       taskName: { type: String, required: true },
