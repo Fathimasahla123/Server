@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
+const masterSchema = require("./masterModel");
 
 const orderSchema = new mongoose.Schema({
+  ...masterSchema.obj,
   customerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true },
   items: [
     {

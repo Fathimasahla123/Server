@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
-
+const masterSchema = require("./masterModel");
 const analyticsSchema = new mongoose.Schema({
+  ...masterSchema.obj,
+  
   date: { type: Date, required: true },
   totalRevenue: { type: Number, required: true },
   popularDishes: [

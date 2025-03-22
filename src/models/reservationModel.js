@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
+const masterSchema = require("./masterModel");
 
 const reservationSchema = new mongoose.Schema({
+  ...masterSchema.obj,
   customerName: { type: String, required: true },
   phoneNumber: { type: Number, required: true},
   date: { type: String, required: true },

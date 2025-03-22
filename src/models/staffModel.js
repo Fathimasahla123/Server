@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
+const masterSchema = require("./masterModel");
 
 const staffSchema = new mongoose.Schema({
+  ...masterSchema.obj,
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type:String, required: true},

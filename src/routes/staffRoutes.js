@@ -1,11 +1,10 @@
-// // routes/staffRoutes.js
-// const express = require("express");
-// const { authenticate, authorize } = require("../middleware/authMiddleware");
-// const { getStaffDashboard } = require("../controllers/staffController");
+const express = require("express");
+const router = express.Router();
+const authMiddleware = require("../middleware/authMiddleware");
+const staffController = require("../controllers/staffController");
+ 
 
-// const router = express.Router();
+router.get("/customers", authMiddleware, staffController.viewStaffCustomer);
+router.get("/feedbacks", authMiddleware, staffController.viewStaffFeddbacks);
 
-// // Staff dashboard route
-// router.get("/dashboard", authenticate, authorize("Staff"), getStaffDashboard);
-
-// module.exports = router;
+ module.exports = router;

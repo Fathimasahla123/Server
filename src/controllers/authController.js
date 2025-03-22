@@ -13,12 +13,9 @@ exports.signup = async (req, res) => {
     }
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    admin = new User({ name, email, password: hashedPassword, role: "Admin" });
+    admin = new User({ name, email, password: hashedPassword, role: "Admin",createdBy: null });
     await admin.save();
     res.status(201).json({ msg: "Admin created successfully" });
-
-    // const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET);
-    // res.status(201).json({ user, token });
   } catch (error) {
     res.status(500).json({ msg: "Internal Server error", error });
   }

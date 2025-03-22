@@ -7,8 +7,8 @@ const bcrypt = require("bcryptjs");
 exports.addUser= async (req, res) => {
   try {
    console.log("Request Body:", req.body);
-  //   if (req.user.role !== "Admin")
-  //     return res.status(403).json({ msg: "Access denied" });
+    if (req.user.role === "Admin")
+      return res.status(403).json({ msg: "Access denied" });
     const { name, email, password, role } = req.body;
     console.log("Extracted role:", role);
     if (!["Customer", "Staff"].includes(role))
@@ -21,6 +21,7 @@ exports.addUser= async (req, res) => {
       email,
       password: hashedPassword,
       role,
+      createdBy: req.user._id
     });
     console.log(newUser);
     await newUser.save();
@@ -34,8 +35,8 @@ exports.addUser= async (req, res) => {
 
 exports.viewUser = async (req, res) => {
   try {
-    // if (req.user.role !== "Admin")
-    //   return res.status(403).json({ msg: "Access denied" });
+    if (req.user.role === "Admin")
+      return res.status(403).json({ msg: "Access denied" });
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: "user not found" });
     res.json({ user });
@@ -46,8 +47,8 @@ exports.viewUser = async (req, res) => {
 
 exports.listUsers = async (req, res) => {
   try {
-    // if (req.user.role !== "Admin")
-    //   return res.status(403).json({ msg: "Access denied" });
+    if (req.user.role === "Admin")
+      return res.status(403).json({ msg: "Access denied" });
     const user = await User.find();
     res.json({ user });
   } catch (error) {
@@ -57,8 +58,8 @@ exports.listUsers = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
   try {
-    // if (req.user.role !== "Admin")
-    //   return res.status(403).json({ msg: "Access denied" });
+    if (req.user.role === "Admin")
+      return res.status(403).json({ msg: "Access denied" });
     const user = await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
     });
@@ -71,8 +72,8 @@ exports.updateUser = async (req, res) => {
 
 exports.deleteUser = async (req, res) => {
   try {
-    // if (req.user.role !== "admin")
-    //   return res.status(403).json({ msg: "Access denied" });
+    if (req.user.role === "Admin")
+      return res.status(403).json({ msg: "Access denied" });
     const user = await User.findByIdAndDelete(req.params.id);
     if (!user) return res.status(404).json({ message: "User not found" });
     res.json({ message: " User deleted successfully" });
@@ -84,8 +85,8 @@ exports.deleteUser = async (req, res) => {
 //staff endpoints
 exports.addStaff = async (req, res) => {
   try {
-    // if (req.user.role !== "admin")
-    //   return res.status(403).json({ msg: "Access denied" });
+    if (req.user.role === "Admin")
+      return res.status(403).json({ msg: "Access denied" });
     const { name, email, password, phoneNumber, incharge, tasks,attendance, role } = req.body;
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -110,8 +111,8 @@ exports.addStaff = async (req, res) => {
 };
 exports.viewStaff = async (req, res) => {
   try {
-    // if (req.user.role !== "admin")
-    //   return res.status(403).json({ msg: "Access denied" });
+    if (req.user.role === "Admin")
+      return res.status(403).json({ msg: "Access denied" });
     const staff = await Staff.findOne({ _id: req.params.id, role: "Staff" });
     if (!staff) return res.status(404).json({ message: "Staff not found" });
     res.json({ staff });
@@ -122,8 +123,8 @@ exports.viewStaff = async (req, res) => {
 
 exports.listStaffs = async (req, res) => {
   try {
-    // if (req.user.role !== "admin")
-    //   return res.status(403).json({ msg: "Access denied" });
+    if (req.user.role === "Admin")
+      return res.status(403).json({ msg: "Access denied" });
     const staff = await Staff.find({ role: "Staff" });
     res.json({ staff });
   } catch (error) {
@@ -133,8 +134,8 @@ exports.listStaffs = async (req, res) => {
 
 exports.updateStaff = async (req, res) => {
   try {
-    // if (req.user.role !== "admin")
-    //   return res.status(403).json({ msg: "Access denied" });
+    if (req.user.role === "Admin")
+      return res.status(403).json({ msg: "Access denied" });
     const staff = await Staff.findOneAndUpdate(
       { _id: req.params.id, role: "Staff" },
       req.body,
@@ -149,8 +150,8 @@ exports.updateStaff = async (req, res) => {
 
 exports.deleteStaff = async (req, res) => {
   try {
-    // if (req.user.role !== "admin")
-    //   return res.status(403).json({ msg: "Access denied" });
+    if (req.user.role === "Admin")
+      return res.status(403).json({ msg: "Access denied" });
     const staff = await Staff.findOneAndDelete({
       _id: req.params.id,
       role: "Staff",
@@ -165,8 +166,8 @@ exports.deleteStaff = async (req, res) => {
 //Order functions
 exports.addOrder = async (req, res) => {
   try {
-    // if (req.user.role !== "Admin")
-    //   return res.status(403).json({ msg: "Access denied" });
+    if (req.user.role === "Admin")
+      return res.status(403).json({ msg: "Access denied" });
     const { customerId, items, totalAmount, orderType, deliveryAddress } =
       req.body;
 
@@ -188,8 +189,8 @@ exports.addOrder = async (req, res) => {
 
 exports.viewOrder = async (req, res) => {
   try {
-    // if (req.user.role !== "admin")
-    //   return res.status(403).json({ msg: "Access denied" });
+    if (req.user.role === "Admin")
+      return res.status(403).json({ msg: "Access denied" });
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ message: "Order not found" });
     res.json({ order });
@@ -200,8 +201,8 @@ exports.viewOrder = async (req, res) => {
 
 exports.listOrders = async (req, res) => {
   try {
-    // if (req.user.role !== "admin")
-    //   return res.status(403).json({ msg: "Access denied" });
+    if (req.user.role === "Admin")
+      return res.status(403).json({ msg: "Access denied" });
     const order = await Order.find();
     res.json({ order });
   } catch (error) {
@@ -211,8 +212,8 @@ exports.listOrders = async (req, res) => {
 
 exports.updateOrder = async (req, res) => {
   try {
-    // if (req.user.role !== "admin")
-    //   return res.status(403).json({ msg: "Access denied" });
+    if (req.user.role === "Admin")
+      return res.status(403).json({ msg: "Access denied" });
     const order = await Order.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
     });
@@ -225,8 +226,8 @@ exports.updateOrder = async (req, res) => {
 
 exports.deleteOrder = async (req, res) => {
   try {
-    // if (req.user.role !== "admin")
-    //   return res.status(403).json({ msg: "Access denied" });
+    if (req.user.role === "Admin")
+      return res.status(403).json({ msg: "Access denied" });
     const order = await Order.findByIdAndDelete(req.params.id);
     if (!order) return res.status(404).json({ message: "Order not found" });
     res.json({ message: " Order deleted successfully" });
@@ -239,8 +240,8 @@ exports.deleteOrder = async (req, res) => {
 
 exports.addReservation = async (req, res) => {
   try {
-    // if (req.user.role !== "admin")
-    //   return res.status(403).json({ msg: "Access denied" });
+    if (req.user.role === "Admin")
+      return res.status(403).json({ msg: "Access denied" });
     const { customerName, phoneNumber, date, time, guests, specialRequests } =
       req.body;
     const reservation = new Reservation({
@@ -262,8 +263,8 @@ exports.addReservation = async (req, res) => {
 
 exports.viewReservation = async (req, res) => {
   try {
-    // if (req.user.role !== "admin")
-    //   return res.status(403).json({ msg: "Access denied" });
+    if (req.user.role === "Admin")
+      return res.status(403).json({ msg: "Access denied" });
     const reservation = await Reservation.findById(req.params.id);
     if (!reservation)
       return res.status(404).json({ message: "Reservation not found" });
@@ -275,8 +276,8 @@ exports.viewReservation = async (req, res) => {
 
 exports.listReservations = async (req, res) => {
   try {
-    // if (req.user.role !== "admin")
-    //   return res.status(403).json({ msg: "Access denied" });
+    if (req.user.role === "Admin")
+      return res.status(403).json({ msg: "Access denied" });
     const reservation = await Reservation.find();
     res.status(200).json({ success: true, reservation });
   } catch (error) {
@@ -286,8 +287,8 @@ exports.listReservations = async (req, res) => {
 
 exports.updateReservation = async (req, res) => {
   try {
-    // if (req.user.role !== "admin")
-    //   return res.status(403).json({ msg: "Access denied" });
+    if (req.user.role === "Admin")
+      return res.status(403).json({ msg: "Access denied" });
     const reservation = await Reservation.findByIdAndUpdate(
       req.params.id,
       req.body,
@@ -305,8 +306,8 @@ exports.updateReservation = async (req, res) => {
 
 exports.deleteReservation = async (req, res) => {
   try {
-    // if (req.user.role !== "admin")
-    //   return res.status(403).json({ msg: "Access denied" });
+    if (req.user.role === "Admin")
+      return res.status(403).json({ msg: "Access denied" });
     const reservation = await Reservation.findByIdAndDelete(req.params.id);
     if (!reservation)
       return res.status(404).json({ message: "Reservation not found" });
@@ -332,8 +333,8 @@ exports.getAvailableOptions = async (req, res) => {
 
 exports.getStaffs = async (req, res) => {
   try {
-    // if (req.user.role !== "admin")
-    //   return res.status(403).json({ msg: "Access denied" });
+    if (req.user.role === "Admin")
+      return res.status(403).json({ msg: "Access denied" });
     const staffs = await User.find({ role: "Staff" });
     res.json(staffs);
   } catch (error) {
@@ -344,8 +345,8 @@ exports.getStaffs = async (req, res) => {
 
 exports.getCustomers = async (req, res) => {
   try {
-    // if (req.user.role !== "admin")
-    //   return res.status(403).json({ msg: "Access denied" });
+    if (req.user.role === "Admin")
+      return res.status(403).json({ msg: "Access denied" });
     const customers = await User.find({ role: "Customer" });
     res.json(customers);
   } catch (error) {
@@ -356,8 +357,8 @@ exports.getCustomers = async (req, res) => {
 
 exports.getOrders = async (req, res) => {
   try {
-    // if (req.user.role !== "admin")
-    //   return res.status(403).json({ msg: "Access denied" });
+    if (req.user.role === "Admin")
+      return res.status(403).json({ msg: "Access denied" });
     const orders = await User.find();
     res.json(orders);
   } catch (error) {
