@@ -2,13 +2,15 @@ require("dotenv").config();
 const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const Reservation = require("../models/reservationModel");
-const Staff = require("../models/staffModel");
+//const Reservation = require("../models/reservationModel");
+//const Staff = require("../models/staffModel");
 const Feedback = require("../models/feedbackModel");
-const Order = require("../models/orderModel");
-const multer = require("multer");
-const path = require("path");
+//const Order = require("../models/orderModel");
+const CustomerOrderReservation = require("../models/customerOrderModel")
+//const multer = require("multer");
+//const path = require("path");
 const { cloudinary } = require("../config/cloudinaryConfig");
+
 
 exports.registerCustomer = async (req, res) => {
   try {
@@ -174,11 +176,9 @@ exports.uploadProfileImage = async (req, res) => {
     const customer = await Usee.findById(req.user.id);
 
     if (!customer || customer.role !== "Customer") {
-      return res
-        .status(403)
-        .json({
-          message: "Unauthorized: Only customer can upload profile image",
-        });
+      return res.status(403).json({
+        message: "Unauthorized: Only customer can upload profile image",
+      });
     }
     if (customer.profileImageUrl) {
       const publicId = customer.profileImageUrl.split("/").pop().split(".")[0];
@@ -190,7 +190,7 @@ exports.uploadProfileImage = async (req, res) => {
     }
 
     customer.profileImageUrl = req.file.path;
-    await customer.save(); 
+    await customer.save();
     res.json({
       message: "Profile image uploaded successfully",
       profileImageUrl: customer.profileImageUrl,
@@ -198,5 +198,158 @@ exports.uploadProfileImage = async (req, res) => {
   } catch (error) {
     console.error("Error uploading profile image:", error);
     res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+exports.submitFeedback = async (req, res) => {
+  try {
+    const { staffId, orderId, reservationId, ratings, comments, week } =
+      req.body;
+    const enrollment = await CustomerOrderReservation.findOne({
+      customerId: req.user.id,
+      orderId,
+      reservationId,
+    });
+
+    if (!enrollment) {
+      return res.status(403).json({ message: "Enrollment not found" });
+    }
+    const existingFeedback = await Feedback.findOne({
+      customerId: req.user.id,
+      staffId,
+      orderId,
+      reservationId,
+      week,
+    });
+    if (existingFeedback) {
+      return res.status(400).json({ message: "Feedback already submitted" });
+    }
+
+    const ratingFields = ["customerService", "pinctuality"];
+    for (const field of ratingFields) {
+      if (!ratings[field] || ratings[field] < 1 || ratings[field] > 5) {
+        return res.status(400).json({
+          message: `Invalid rating for ${field}. Must be between 1 and 5`,
+        });
+      }
+    }
+    const feedback = new Feedback({
+      customerId: req.user.id,
+      staffId,
+      orderId,
+      reservationId,
+      week,
+      ratings,
+      comments,
+      createdBy: req.user.id,
+    });
+
+    await feedback.save();
+    res
+      .status(201)
+      .json({ message: "Feedback submitted successfully", feedback });
+  } catch (error) {
+    console.error("Error submitting feedback:", error);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+exports.viewReservationDetails = async (req, res) => {
+  try {
+    if (!ewq.user?.id) {
+      return res
+        .status(401)
+        .json({ msg: "Access denied, authentication required " });
+    }
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.page) || 10;
+    const skip = (page - 1) * limit;
+
+    const query = { customerId: req.user.id, isActive: true };
+    const customerOrders = await CustomerOrderReservation.find(query)
+      .populate({
+        path: "reservationId",
+        select: "customerName phoneNumber date",
+        match: { status: { $ne: "deleted" } },
+      })
+      .populate({
+        path: "orderId",
+        select: "items totalAmount orderType deliveryAddress",
+        match: { isActive: true },
+      })
+      .populate({
+        path: "staffId",
+        select: "name",
+        match: { isActive: true },
+      })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    const filteredOrders = customerOrders.filter(
+      (order) => order.reservationId && order.orderId && order.staffId
+    );
+
+    if (!filteredOrders) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No active reservation enrollment" });
+    }
+    const totalCount = await CustomerOrderReservation.countDocuments(query);
+    res.status(200).json({
+      success: true,
+      data: filteredOrders,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalCount / limit),
+        totalItems: totalCount,
+        itemsPerPage: limit,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching reservation details:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Server error", error: error.message });
+  }
+};
+
+exports.viewMyFeedback = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.page) || 10;
+    const skip = (page - 1) * limit;
+
+    const feedbacks = await Feedback.find({
+      customerId: req.user.id,
+      isActive: true,
+    })
+      .populate("staffId", "name email inCharge")
+      .populate("orderId", "items totalAmount")
+      .populate("reservationId", "customerName phoneNumber")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await Feedback.countDocuments({
+      customerId: req.user.id,
+      isActive: true,
+    });
+
+    res.json({
+      success: true,
+      data: feedbacks,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        itemsPerPage: limit,
+      },
+    });
+  } catch (error) {
+    console.error("View feedback error:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Server error", error: error.message });
   }
 };

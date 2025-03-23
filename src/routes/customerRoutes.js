@@ -12,3 +12,9 @@ router.put("/update-profile", authMiddleware, updateProfile);
 router.get("/profile", authMiddleware, customerController.viewProfile);
 router.post("/upload-profile", authMiddleware, uploadMiddleware.single("profileImage") ,customerController.uploadProfileImage);
 
+router.post("/submit-feedback", authMiddleware, customerController.submitFeedback);
+router.get("/reservation-details", authMiddleware, customerController.viewReservationDetails);
+router.get("/feedback", authMiddleware, customerController.viewMyFeedback);
+
+module.exports = router;
+
