@@ -2,20 +2,20 @@ require("dotenv").config();
 const User = require("../models/userModel");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-//const Reservation = require("../models/reservationModel");
-//const Staff = require("../models/staffModel");
+const Reservation = require("../models/reservationModel");
+const Staff = require("../models/staffModel");
 const Feedback = require("../models/feedbackModel");
-//const Order = require("../models/orderModel");
+const Order = require("../models/orderModel");
 const CustomerOrderReservation = require("../models/customerOrderModel")
-//const multer = require("multer");
-//const path = require("path");
+const multer = require("multer");
+const path = require("path");
 const { cloudinary } = require("../config/cloudinaryConfig");
 
 
 exports.registerCustomer = async (req, res) => {
   try {
     const { name, email } = req.body;
-    if (req.user.role !== "Admin")
+    if (req.user.role === "Admin")
       return res.status(403).json({ message: "Access denied" });
 
     let existingUser = await User.findOne({ email });
@@ -33,7 +33,7 @@ exports.registerCustomer = async (req, res) => {
       createdBy: req.user._id,
       isFirstLogin: true,
     });
-    await admin.save();
+    
     res.status(201).json({
       msg: "Customer registered successfully",
       customer: {
@@ -77,7 +77,7 @@ exports.loginCustomer = async (req, res) => {
         isFirstLogin: customer.isFirstLogin,
       },
     });
-  } catch (err) {
+  } catch (error) {
     console.error(" Login eror:", error);
     res.status(500).json({ error: err.message });
   }
@@ -103,14 +103,14 @@ exports.changePassword = async (req, res) => {
     customer.isFirstLogin = false;
 
     await customer.save();
-    res.json({ message: "Password chsnged successfully" });
+    res.json({ message: "Password changed successfully" });
   } catch (error) {
     console.error("Change password error:", error);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
-exports.upateProfile = async (req, res) => {
+exports.updateProfile = async (req, res) => {
   try {
     const { name, email } = req.body;
     const customer = await User.findById(req.user.id);
@@ -146,7 +146,7 @@ exports.upateProfile = async (req, res) => {
 
 exports.viewProfile = async (req, res) => {
   try {
-    if (req.user.role !== "Customer")
+    if (req.user.role === "Customer")
       return res.status(403).json({ msg: "Access denied" });
     const customer = await User.findById(req.params.id)
       .select("-password")
@@ -159,9 +159,9 @@ exports.viewProfile = async (req, res) => {
     }
     const profileData = {
       ...customer.toObject(),
-      profileImageUrl: MediaStreamAudioDestinationNode.profileImageUrl || null,
+      profileImageUrl: customer.profileImageUrl || null,
     };
-    res.staus(200).json({ profileData });
+    res.status(200).json({ profileData });
   } catch (error) {
     console.error("Error fetching customer profile:", error);
     res.status(500).json({ msg: "Server error", error: error.message });
@@ -203,17 +203,17 @@ exports.uploadProfileImage = async (req, res) => {
 
 exports.submitFeedback = async (req, res) => {
   try {
-    const { staffId, orderId, reservationId, ratings, comments, week } =
+    const { staffId, orderId, reservationId, rating, comment, week } =
       req.body;
-    const enrollment = await CustomerOrderReservation.findOne({
-      customerId: req.user.id,
-      orderId,
-      reservationId,
-    });
+    // const enrollment = await CustomerOrderReservation.findOne({
+    //   customerId: req.user.id,
+    //   orderId,
+    //   reservationId,
+    // });
 
-    if (!enrollment) {
-      return res.status(403).json({ message: "Enrollment not found" });
-    }
+    // if (!enrollment) {
+    //   return res.status(403).json({ message: "Enrollment not found" });
+   // }
     const existingFeedback = await Feedback.findOne({
       customerId: req.user.id,
       staffId,
@@ -225,9 +225,9 @@ exports.submitFeedback = async (req, res) => {
       return res.status(400).json({ message: "Feedback already submitted" });
     }
 
-    const ratingFields = ["customerService", "pinctuality"];
+    const ratingFields = ["customerService", "punctuality"];
     for (const field of ratingFields) {
-      if (!ratings[field] || ratings[field] < 1 || ratings[field] > 5) {
+      if (!rating[field] || rating[field] < 1 || rating[field] > 5) {
         return res.status(400).json({
           message: `Invalid rating for ${field}. Must be between 1 and 5`,
         });
@@ -239,8 +239,8 @@ exports.submitFeedback = async (req, res) => {
       orderId,
       reservationId,
       week,
-      ratings,
-      comments,
+      rating,
+      comment,
       createdBy: req.user.id,
     });
 
@@ -256,7 +256,7 @@ exports.submitFeedback = async (req, res) => {
 
 exports.viewReservationDetails = async (req, res) => {
   try {
-    if (!ewq.user?.id) {
+    if (!req.user?.id) {
       return res
         .status(401)
         .json({ msg: "Access denied, authentication required " });
@@ -326,7 +326,7 @@ exports.viewMyFeedback = async (req, res) => {
     })
       .populate("staffId", "name email inCharge")
       .populate("orderId", "items totalAmount")
-      .populate("reservationId", "customerName phoneNumber")
+      .populate("reservationId", "customerName guests")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);

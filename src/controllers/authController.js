@@ -13,7 +13,13 @@ exports.signup = async (req, res) => {
     }
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    admin = new User({ name, email, password: hashedPassword, role: "Admin",createdBy: null });
+    admin = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role: "Admin",
+      createdBy: null,
+    });
     await admin.save();
     res.status(201).json({ msg: "Admin created successfully" });
   } catch (error) {
@@ -39,7 +45,7 @@ exports.login = async (req, res) => {
         expiresIn: "7d",
       }
     );
-        res.status(200).json({ user, token });
+    res.status(200).json({ user, token });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

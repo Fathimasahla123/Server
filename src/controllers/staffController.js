@@ -8,18 +8,18 @@ const mongoose = require("mongoose");
 
 exports.viewStaffCustomer = async (req, res) => {
   try {
-    if (req.user.role !== "Staff") {
+    if (req.user.role === "Staff") {
       return res.status(403).json({ success: false, message: "Access denied" });
     }
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const reservations = await Reservation.find({
+    const reservation = await Reservation.find({
       staffId: req.user.id,
       isActive: true,
     });
-    const reservationIds = reservations.map((batch) => batch._id);
+    const reservationIds = reservation.map((reservatin) => reservation._id);
 
     const customers = await CustomerOrderReservation.find({
       reservationId: { $in: reservationIds },
@@ -57,7 +57,7 @@ exports.viewStaffCustomer = async (req, res) => {
 
 exports.viewStaffFeddbacks = async (req,res) =>{
 try {
-  if (req.user.role !== "Staff") {
+  if (req.user.role == "Staff") {
     return res.status(403).json({ success: false, message: "Access denied" });
   }
   const page = parseInt(req.query.page) || 1;
