@@ -22,6 +22,7 @@ app.use("/api/admin", require("./src/routes/adminRoutes"));
 app.use("/api/staff", require("./src/routes/staffRoutes"));
 app.use("/api/customer", require("./src/routes/customerRoutes"));
 app.use("/api/analytic", require("./src/routes/analyticRoutes"));
+app.use("/api/product", require("./src/routes/productRoutes"));
 
 app.all("*", (req, res) => {
   res.send("api is working");

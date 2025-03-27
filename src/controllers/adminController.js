@@ -3,16 +3,17 @@ const Staff = require("../models/staffModel");
 const Order = require("../models/orderModel");
 const Feedback = require("../models/feedbackModel");
 const Reservation = require("../models/reservationModel");
+const Product = require("../models/productModel");
 const bcrypt = require("bcryptjs");
 
 exports.addUser = async (req, res) => {
   try {
     console.log("Request Body:", req.body);
-    if (req.user.role === "Admin")
+    if (req.user.role !== "Admin")
       return res.status(403).json({ msg: "Access denied" });
     const { name, email, password, role } = req.body;
     console.log("Extracted role:", role);
-    if (!["Customer", "Staff"].includes(role))
+    if (!["Customer"].includes(role))
       return res.status(400).json({ msg: "Invalid role" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -36,7 +37,7 @@ exports.addUser = async (req, res) => {
 
 exports.viewUser = async (req, res) => {
   try {
-    if (req.user.role === "Admin")
+    if (req.user.role !== "Admin")
       return res.status(403).json({ msg: "Access denied" });
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: "user not found" });
@@ -48,7 +49,7 @@ exports.viewUser = async (req, res) => {
 
 exports.listUsers = async (req, res) => {
   try {
-    if (req.user.role === "Admin")
+    if (req.user.role !== "Admin")
       return res.status(403).json({ msg: "Access denied" });
     const user = await User.find();
     res.json({ user });
@@ -59,7 +60,7 @@ exports.listUsers = async (req, res) => {
 
 exports.updateUser = async (req, res) => {
   try {
-    if (req.user.role === "Admin")
+    if (req.user.role !== "Admin")
       return res.status(403).json({ msg: "Access denied" });
     const user = await User.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
@@ -73,7 +74,7 @@ exports.updateUser = async (req, res) => {
 
 exports.deleteUser = async (req, res) => {
   try {
-    if (req.user.role === "Admin")
+    if (req.user.role !== "Admin")
       return res.status(403).json({ msg: "Access denied" });
     const user = await User.findByIdAndDelete(req.params.id);
     if (!user) return res.status(404).json({ message: "User not found" });
@@ -86,7 +87,7 @@ exports.deleteUser = async (req, res) => {
 //staff endpoints
 exports.addStaff = async (req, res) => {
   try {
-    if (req.user.role === "Admin")
+    if (req.user.role !== "Admin")
       return res.status(403).json({ msg: "Access denied" });
     const {
       name,
@@ -122,7 +123,7 @@ exports.addStaff = async (req, res) => {
 };
 exports.viewStaff = async (req, res) => {
   try {
-    if (req.user.role === "Admin")
+    if (req.user.role !== "Admin")
       return res.status(403).json({ msg: "Access denied" });
     const staff = await Staff.findOne({ _id: req.params.id, role: "Staff" });
     if (!staff) return res.status(404).json({ message: "Staff not found" });
@@ -134,7 +135,7 @@ exports.viewStaff = async (req, res) => {
 
 exports.listStaffs = async (req, res) => {
   try {
-    if (req.user.role === "Admin")
+    if (req.user.role !== "Admin")
       return res.status(403).json({ msg: "Access denied" });
     const staff = await Staff.find({ role: "Staff" });
     res.json({ staff });
@@ -145,7 +146,7 @@ exports.listStaffs = async (req, res) => {
 
 exports.updateStaff = async (req, res) => {
   try {
-    if (req.user.role === "Admin")
+    if (req.user.role !== "Admin")
       return res.status(403).json({ msg: "Access denied" });
     const staff = await Staff.findOneAndUpdate(
       { _id: req.params.id, role: "Staff" },
@@ -161,7 +162,7 @@ exports.updateStaff = async (req, res) => {
 
 exports.deleteStaff = async (req, res) => {
   try {
-    if (req.user.role === "Admin")
+    if (req.user.role !== "Admin")
       return res.status(403).json({ msg: "Access denied" });
     const staff = await Staff.findOneAndDelete({
       _id: req.params.id,
@@ -177,16 +178,27 @@ exports.deleteStaff = async (req, res) => {
 //Order functions
 exports.addOrder = async (req, res) => {
   try {
-    if (req.user.role === "Admin")
+    if (req.user.role !== "Admin")
       return res.status(403).json({ msg: "Access denied" });
-    const { customerId, items, totalAmount, orderType, deliveryAddress } =
-      req.body;
-    const customer = await User.findOne({ _id:customerId, role: "Customer"});
+    const {
+      customerId,
+      staffId,
+      items,
+      totalAmount,
+      orderType,
+      deliveryAddress,
+    } = req.body;
+    const customer = await User.findOne({ _id: customerId, role: "Customer" });
     if (!customer) {
       return res.status(400).json({ message: "Invalid customerId" });
     }
+    const staff = await Staff.findOne({ _id: staffId, role: "Staff" });
+    if (!staff) {
+      return res.status(400).json({ message: "Invalid staffId" });
+    }
     const order = new Order({
       customerId,
+      staffId,
       items,
       totalAmount,
       orderType,
@@ -204,7 +216,7 @@ exports.addOrder = async (req, res) => {
 
 exports.viewOrder = async (req, res) => {
   try {
-    if (req.user.role === "Admin")
+    if (req.user.role !== "Admin")
       return res.status(403).json({ msg: "Access denied" });
     const order = await Order.findById(req.params.id);
     if (!order) return res.status(404).json({ message: "Order not found" });
@@ -216,7 +228,7 @@ exports.viewOrder = async (req, res) => {
 
 exports.listOrders = async (req, res) => {
   try {
-    if (req.user.role === "Admin")
+    if (req.user.role !== "Admin")
       return res.status(403).json({ msg: "Access denied" });
     const order = await Order.find();
     res.json({ order });
@@ -227,13 +239,13 @@ exports.listOrders = async (req, res) => {
 
 exports.updateOrder = async (req, res) => {
   try {
-    if (req.user.role === "Admin")
+    if (req.user.role !== "Admin")
       return res.status(403).json({ msg: "Access denied" });
     const order = await Order.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
     });
     if (!order) return res.status(404).json({ message: "Order not found" });
-    res.json({ message: " Order updated successfully" , order});
+    res.json({ message: " Order updated successfully", order });
   } catch (error) {
     res.status(500).json({ msg: "Server error", error: error.message });
   }
@@ -241,7 +253,7 @@ exports.updateOrder = async (req, res) => {
 
 exports.deleteOrder = async (req, res) => {
   try {
-    if (req.user.role === "Admin")
+    if (req.user.role !== "Admin")
       return res.status(403).json({ msg: "Access denied" });
     const order = await Order.findByIdAndDelete(req.params.id);
     if (!order) return res.status(404).json({ message: "Order not found" });
@@ -255,15 +267,15 @@ exports.deleteOrder = async (req, res) => {
 
 exports.addReservation = async (req, res) => {
   try {
-    if (req.user.role === "Admin")
+    if (req.user.role !== "Admin")
       return res.status(403).json({ msg: "Access denied" });
     const { customerName, customerId, date, time, guests, specialRequests } =
       req.body;
-      const customer = await User.findOne({ _id:customerId, role: "Customer"});
-      if (!customer) {
-        return res.status(400).json({ message: "Invalid customerId" });
-      }
-     
+    const customer = await User.findOne({ _id: customerId, role: "Customer" });
+    if (!customer) {
+      return res.status(400).json({ message: "Invalid customerId" });
+    }
+
     const reservation = new Reservation({
       customerName,
       customerId,
@@ -286,7 +298,7 @@ exports.addReservation = async (req, res) => {
 
 exports.viewReservation = async (req, res) => {
   try {
-    if (req.user.role === "Admin")
+    if (req.user.role !== "Admin")
       return res.status(403).json({ msg: "Access denied" });
     const reservation = await Reservation.findById(req.params.id);
     if (!reservation)
@@ -299,7 +311,7 @@ exports.viewReservation = async (req, res) => {
 
 exports.listReservations = async (req, res) => {
   try {
-    if (req.user.role === "Admin")
+    if (req.user.role !== "Admin")
       return res.status(403).json({ msg: "Access denied" });
     const reservation = await Reservation.find();
     res.status(200).json({ success: true, reservation });
@@ -310,7 +322,7 @@ exports.listReservations = async (req, res) => {
 
 exports.updateReservation = async (req, res) => {
   try {
-    if (req.user.role === "Admin")
+    if (req.user.role !== "Admin")
       return res.status(403).json({ msg: "Access denied" });
     const reservation = await Reservation.findByIdAndUpdate(
       req.params.id,
@@ -321,7 +333,7 @@ exports.updateReservation = async (req, res) => {
     );
     if (!reservation)
       return res.status(404).json({ message: "Reservation not found" });
-    res.json({ message: " Reservation updated successfully" ,reservation});
+    res.json({ message: " Reservation updated successfully", reservation });
   } catch (error) {
     res.status(500).json({ msg: "Server error", error: error.message });
   }
@@ -329,7 +341,7 @@ exports.updateReservation = async (req, res) => {
 
 exports.deleteReservation = async (req, res) => {
   try {
-    if (req.user.role === "Admin")
+    if (req.user.role !== "Admin")
       return res.status(403).json({ msg: "Access denied" });
     const reservation = await Reservation.findByIdAndDelete(req.params.id);
     if (!reservation)
@@ -356,7 +368,7 @@ exports.getAvailableOptions = async (req, res) => {
 
 exports.getStaffs = async (req, res) => {
   try {
-    if (req.user.role === "Admin")
+    if (req.user.role !== "Admin")
       return res.status(403).json({ msg: "Access denied" });
     const staffs = await User.find({ role: "Staff" });
     res.json(staffs);
@@ -368,7 +380,7 @@ exports.getStaffs = async (req, res) => {
 
 exports.getCustomers = async (req, res) => {
   try {
-    if (req.user.role === "Admin")
+    if (req.user.role !== "Admin")
       return res.status(403).json({ msg: "Access denied" });
     const customers = await User.find({ role: "Customer" });
     res.json(customers);
@@ -380,7 +392,7 @@ exports.getCustomers = async (req, res) => {
 
 exports.getOrders = async (req, res) => {
   try {
-    if (req.user.role === "Admin")
+    if (req.user.role !== "Admin")
       return res.status(403).json({ msg: "Access denied" });
     const orders = await Order.find();
     res.json(orders);
@@ -394,92 +406,224 @@ exports.getOrders = async (req, res) => {
 
 exports.getTotalRevenue = async (req, res) => {
   try {
-    if (req.user.role === "Admin")
+    if (req.user.role !== "Admin")
       return res.status(403).json({ msg: "Access denied" });
-    const orders = await Order.find();
-    if (!orders) return res.status(404).json({ message: "Order not found" });
-    const totalRevenue = orders.reduce(
-      (sum, order) => sum + order.totalAmount,
-      0
-    );
-    res.status(200).json({ totalRevenue });
+    const result = await Order.aggregate([
+      { $match: { status: { $ne: "Cancelled" } } },
+      { $group: { _id: null, total: { $sum: "$totalAmount" } } },
+    ]);
+
+    res.status(200).json({
+      success: true,
+      totalRevenue: result[0]?.total || 0,
+    });
   } catch (error) {
-    console.error("Error fetching total revenue:", error);
-    res.status(500).json({ msg: "Server error", error: error.message });
+    console.error("Revenue error:", error);
+    res.status(500).json({ success: false, message: "Failed to get revenue" });
   }
 };
 
 exports.getPopularDishes = async (req, res) => {
   try {
-    if (req.user.role === "Admin")
+    if (req.user.role !== "Admin")
       return res.status(403).json({ msg: "Access denied" });
-    const orders = await Order.find();
-    if (!orders) return res.status(404).json({ message: "Order not found" });
-    const dishCounts = {};
+    const result = await Order.aggregate([
+      { $unwind: "$items" },
+      {
+        $group: {
+          _id: "$items.dishName",
+          totalOrders: { $sum: "$items.quantity" },
+        },
+      },
+      { $sort: { totalOrders: -1 } },
+      { $limit: 5 },
+    ]);
 
-    orders.forEach((order) => {
-      order.items.forEach((item) => {
-        if (dishCounts[item.dishName]) {
-          dishCounts[item.dishName] += item.quantity;
-        } else {
-          dishCounts[item.dishName] = item.quantity;
-        }
-      });
+    res.status(200).json({
+      success: true,
+      popularDishes: result,
     });
-    const popularDishes = Object.entries(dishCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 5); // Top 5 popular dishes
-
-    res.status(200).json({ popularDishes });
   } catch (error) {
-    console.error("Error fetching popular dishes:", error);
-    res.status(500).json({ msg: "Server error", error: error.message });
+    console.error("Dishes error:", error);
+    res.status(500).json({ success: false, message: "Failed to get dishes" });
   }
 };
 
 exports.getCustomerSatisfaction = async (req, res) => {
   try {
-    if (req.user.role === "Admin")
+    if (req.user.role !== "Admin")
       return res.status(403).json({ msg: "Access denied" });
-    const feedback = await Feedback.find();
-    const totalRatings = feedback.reduce((sum, fb) => sum + fb.rating, 0);
-    const averageRating = totalRatings / feedback.length;
-    res.status(200).json({ averageRating });
+    const result = await Feedback.aggregate([
+      {
+        $group: {
+          _id: null,
+          avgRating: { $avg: "$rating" },
+          totalFeedbacks: { $sum: 1 },
+        },
+      },
+    ]);
+
+    res.status(200).json({
+      success: true,
+      averageRating: result[0]?.avgRating?.toFixed(2) || 0,
+      totalFeedbacks: result[0]?.totalFeedbacks || 0,
+    });
   } catch (error) {
-    console.error("Error fetching customer satisfaction:", error);
-    res.status(500).json({ msg: "Server error", error: error.message });
+    console.error("Satisfaction error:", error);
+    res.status(500).json({ success: false, message: "Failed to get ratings" });
   }
 };
 
 exports.getDeliveryPerformance = async (req, res) => {
   try {
-    if (req.user.role === "Admin")
+    if (req.user.role !== "Admin")
       return res.status(403).json({ msg: "Access denied" });
-    const orders = await Order.find({ orderType: "Delivery" });
-    const onTimeDeliveries = orders.filter(
-      (order) => order.status === "Delivered"
-    ).length;
-    const deliveryPerformance = (onTimeDeliveries / orders.length) * 100; // Percentage of on-time deliveries
-    res.status(200).json({ deliveryPerformance });
+    const result = await Order.aggregate([
+      { $match: { orderType: "Delivery" } },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          delivered: {
+            $sum: { $cond: [{ $eq: ["$status", "Delivered"] }, 1, 0] },
+          },
+        },
+      },
+    ]);
+
+    const performance = result[0]
+      ? (result[0].delivered / result[0].total) * 100
+      : 0;
+
+    res.status(200).json({
+      success: true,
+      performance: performance.toFixed(2) + "%",
+      delivered: result[0]?.delivered || 0,
+      total: result[0]?.total || 0,
+    });
   } catch (error) {
-    console.error("Error fetching delivery performance:", error);
-    res.status(500).json({ msg: "Server error", error: error.message });
+    console.error("Delivery error:", error);
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to get performance" });
   }
 };
 
 exports.getTableTurnoverRate = async (req, res) => {
   try {
-    if (req.user.role === "Admin")
+    if (req.user.role !== "Admin")
       return res.status(403).json({ msg: "Access denied" });
-    const reservations = await Reservation.find({});
-    const totalReservations = reservations.length;
-    const completedReservations = reservations.filter(
-      (reservation) => reservation.status === "Completed"
-    ).length;
-    const turnoverRate = (completedReservations / totalReservations) * 100; // Percentage of completed reservations
-    res.status(200).json({ turnoverRate });
+    const result = await Reservation.aggregate([
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          completed: {
+            $sum: { $cond: [{ $eq: ["$status", "Completed"] }, 1, 0] },
+          },
+        },
+      },
+    ]);
+
+    const rate = result[0] ? (result[0].completed / result[0].total) * 100 : 0;
+
+    res.status(200).json({
+      success: true,
+      turnoverRate: rate.toFixed(2) + "%",
+      completed: result[0]?.completed || 0,
+      total: result[0]?.total || 0,
+    });
   } catch (error) {
-    console.error("Error fetching table turnover rate:", error);
-    res.status(500).json({ msg: "Server error", error: error.message });
+    console.error("Turnover error:", error);
+    res.status(500).json({ success: false, message: "Failed to get turnover" });
+  }
+};
+
+exports.uploadProduct = async (req, res) => {
+  try {
+    if (req.user.role !== "Admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied.",
+      });
+    }
+
+    const { name, category, image, price, description } = req.body;
+    if (!name || !category || !image || !price || !description) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "All fields (name, category, image, price, description) are required",
+      });
+    }
+
+    const newProduct = new Product({
+      ...req.body,
+      createdBy: req.user.id,
+    });
+
+    await newProduct.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Product uploaded successfully",
+      product: {
+        id: newProduct._id,
+        name: newProduct.name,
+        category: newProduct.category,
+        price: newProduct.price,
+      },
+    });
+  } catch (error) {
+    console.error("Product upload error:", error);
+
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        success: false,
+        message: "Validation error",
+        errors: error.errors,
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
+};
+
+exports.getProducts = async (req, res) => {
+  try {
+    const { category, minPrice, maxPrice, search } = req.query;
+    const filter = {};
+
+    if (category) filter.category = category;
+    if (minPrice || maxPrice) {
+      filter.price = {};
+      if (minPrice) filter.price.$gte = minPrice;
+      if (maxPrice) filter.price.$lte = maxPrice;
+    }
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const products = await Product.find(filter).select("-__v").lean();
+
+    res.status(200).json({
+      success: true,
+      count: products.length,
+      products,
+    });
+  } catch (error) {
+    console.error("Get products error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching products",
+      error: error.message,
+    });
   }
 };

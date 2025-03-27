@@ -3,130 +3,182 @@ const Staff = require("../models/staffModel");
 const Feedback = require("../models/feedbackModel");
 const User = require("../models/userModel");
 const Reservation = require("../models/reservationModel");
-const CustomerOrderReservation = require("../models/customerOrderModel");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 
-exports.viewStaffCustomer = async (req, res) => {
+exports.loginStaff = async (req, res) => {
   try {
-    if (req.user.role === "Staff") {
-      return res.status(403).json({ success: false, message: "Access denied" });
+    const { email, password } = req.body;
+
+    const staff = await Staff.findOne({ email, role: "Staff" });
+
+    if (!staff) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials",
+      });
     }
+
+    const isMatch = await bcrypt.compare(password, staff.password);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid credentials please enter correct password",
+      });
+    }
+
+    const token = jwt.sign(
+      {
+        id: staff._id,
+        role: staff.role,
+        email: staff.email,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Login successful",
+      token,
+      staff: {
+        id: staff._id,
+        name: staff.name,
+        email: staff.email,
+        incharge: staff.incharge,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Login failed",
+      error: error.message,
+    });
+  }
+};
+
+exports.getStaffOrders = async (req, res) => {
+  try {
+    if (req.user.role !== "Staff") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied. Only staff can view orders.",
+      });
+    }
+
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const reservation = await Reservation.find({
+    const orders = await Order.find({
       staffId: req.user.id,
       isActive: true,
-    });
-    const reservationIds = reservation.map((reservatin) => reservation._id);
-
-    const customers = await CustomerOrderReservation.find({
-      reservationId: { $in: reservationIds },
-      isActive: true,
     })
-      .populate("customerId", "name email")
-      .populate("orderId", "items totalAmount")
-      .populate("reservationId", "customerName phoneNumber")
+      .populate({
+        path: "customerId",
+        model: "User",
+        select: "name email ",
+      })
+      .populate({
+        path: "feedback",
+        select: "rating comment",
+      })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
 
-    const total = await CustomerOrderReservation.countDocuments({
-      reservationId: { $in: reservationIds },
+    const totalOrders = await Order.countDocuments({
+      staffId: req.user.id,
       isActive: true,
     });
 
-    res.json({
+    const formattedOrders = orders.map((order) => ({
+      orderId: order._id,
+      customer: order.customerId,
+      items: order.items,
+      totalAmount: order.totalAmount,
+      status: order.status,
+      createdAt: order.createdAt,
+      feedback: order.feedback || null,
+    }));
+
+    res.status(200).json({
       success: true,
-      data: customers,
+      data: formattedOrders,
       pagination: {
         currentPage: page,
-        totalPages: Math.ceil(total / limit),
-        totalItems: total,
+        totalPages: Math.ceil(totalOrders / limit),
+        totalItems: totalOrders,
         itemsPerPage: limit,
       },
     });
   } catch (error) {
-    console.error("View staff customers error:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Server error", error: error.message });
+    console.error("Error fetching staff orders:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch orders",
+      error: error.message.includes("Schema")
+        ? "Database configuration error"
+        : error.message,
+    });
   }
 };
 
-exports.viewStaffFeddbacks = async (req,res) =>{
-try {
-  if (req.user.role == "Staff") {
-    return res.status(403).json({ success: false, message: "Access denied" });
-  }
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
-  const skip = (page - 1) * limit;
-
-  const filter = {
-    staffId: new mongoose.Types.ObjectId(req.user.id),
-    isActive: true
-  };
-  if (req.query.orderId) filter.orderId = new mongoose.Types.ObjectId(req.user.orderid);
-  if (req.query.reservationId) filter.reservationId = new mongoose.Types.ObjectId(req.user.reservationid);
-  if (req.query.week) filter.week = parseInt(req.user.week);
-
-
-  const feedbacks = await Feedback.find(filter)
-  .populate("customerId", "name email")
-  .populate("orderId", "items totalAmount")
-  .populate("reservationId", "customerName phoneNumber")
-  .sort({ createdAt: -1 })
-  .skip(skip)
-  .limit(limit);
-
-  const total = await Feedback.countDocuments(filter);
-
-  console.log("Feedback Data Before Aggregation:", feedbacks);
-
-  const aggregatedRatings = await Feedback.aggregate([
-    {
-      $match: {
-        staffId: new mongoose.Types.ObjectId(req.user.id),
-        isActive: true,
-        "ratings.customerService": {$exists: true},
-        "ratings.punctuality": {$exists: true}
-      }
-    },
-    {
-      $group: {
-        _id: null, 
-       avgcustomerService: {$avg: "$ratings.customerService"},
-       avgpunctuality: {$avg: "$ratings.punctuality"},
-       totalFeedbacks: {$sum: 1}
-      }
+exports.getStaffFeedback = async (req, res) => {
+  try {
+    if (req.user.role !== "Staff") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied",
+      });
     }
-  ]);
 
-  console.log("Aggregated Ratings:", aggregatedRatings);
+    const feedbacks = await Feedback.find({
+      staffId: req.user.id,
+      isActive: true,
+    })
+      .populate({
+        path: "customerId",
+        select: "name email",
+      })
+      .populate({
+        path: "orderId",
+        select: "items totalAmount",
+      })
+      .sort({ createdAt: -1 });
 
-  res.json({
-    succecc: true,
-    date: feedbacks,
-    statictics: aggregatedRatings[0] || {
-      avgcustomerService: 0,
-      avgpunctuality: 0,
-      totalFeedbacks: 0
-    },
-    pagination: {
-      currentPage: page,
-      totalPages: Math.ceil(total / limit),
-      totalItems: total,
-      itemsPerPage: limit,
-    },
-  });
-} catch (error) {
-  console.error("View staff feedback error:", error);
-  res.staus(500).json({
-    success: false,
-    message: "Server error",
-    error: error.message
-  });
-}
+    const avgRatings = await Feedback.aggregate([
+      {
+        $match: {
+          staffId: new mongoose.Types.ObjectId(req.user.id),
+          isActive: true,
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          avgService: { $avg: "$rating.customerService" },
+          avgPunctuality: { $avg: "$rating.punctuality" },
+          totalFeedbacks: { $sum: 1 },
+        },
+      },
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: feedbacks,
+      statistics: avgRatings[0] || {
+        avgService: 0,
+        avgPunctuality: 0,
+        totalFeedbacks: 0,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch feedback",
+      error: error.message,
+    });
+  }
 };

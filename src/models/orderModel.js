@@ -3,7 +3,8 @@ const masterSchema = require("./masterModel");
 
 const orderSchema = new mongoose.Schema({
   ...masterSchema.obj,
-  customerId: { type: mongoose.Schema.Types.ObjectId, ref: 'Customer', required: true },
+  customerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  staffId: { type: mongoose.Schema.Types.ObjectId, ref: 'Staff', required: true },
   items: [
     {
       dishName: { type: String, required: true },
