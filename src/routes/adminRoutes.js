@@ -3,7 +3,7 @@ const router = express.Router();
 const  authMiddleware = require("../middleware/authMiddleware");
 const adminController = require("../controllers/adminController");
 
-
+router.get('/adminDashboard', authMiddleware,adminController.adminDashboard);
 //Customer endpoints;
 router.post("/add-user", authMiddleware, adminController.addUser);
 router.get("/view-user/:id",authMiddleware,adminController.viewUser);

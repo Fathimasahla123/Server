@@ -21,7 +21,7 @@ exports.signup = async (req, res) => {
       createdBy: null,
     });
     await admin.save();
-    res.status(201).json({ msg: "Admin created successfully" });
+    res.status(201).json({ success: true,  msg: "Admin created successfully", admin });
   } catch (error) {
     res.status(500).json({ msg: "Internal Server error", error });
   }
@@ -45,7 +45,7 @@ exports.login = async (req, res) => {
         expiresIn: "7d",
       }
     );
-    res.status(200).json({ user, token });
+    res.status(200).json({success: true,  user, token });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -5,7 +5,7 @@ const authMiddleware = require("../middleware/authMiddleware");
 const {uploadMiddleware} = require("../config/cloudinaryConfig");
 
 
-router.post("/login",authMiddleware, customerController.loginCustomer);
+router.post("/customer-login",authMiddleware, customerController.loginCustomer);
 
 router.put("/change-password", authMiddleware, customerController.changePassword);
 router.put("/update-profile", authMiddleware, customerController.updateProfile);

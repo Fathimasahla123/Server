@@ -6,6 +6,88 @@ const Reservation = require("../models/reservationModel");
 const Product = require("../models/productModel");
 const bcrypt = require("bcryptjs");
 
+// Add this at the top of your existing adminController.js
+exports.adminDashboard = async (req, res) => {
+  try {
+    if (req.user.role !== "Admin") {
+      return res.status(403).json({ msg: "Access denied" });
+    }
+
+    // Basic counts for dashboard cards
+    const [users, staff, orders, reservations, products] = await Promise.all([
+      User.countDocuments(),
+      Staff.countDocuments(),
+      Order.countDocuments(),
+      Reservation.countDocuments(),
+      Product.countDocuments()
+    ]);
+
+    res.status(200).json({
+      success: true,
+      navigation: {
+        users: "/admin/users",
+        staff: "/admin/staff",
+        orders: "/admin/orders",
+        reservations: "/admin/reservations",
+        products: "/admin/products",
+        analytics: "/admin/analytics"
+      },
+      quickStats: {
+        totalUsers: users,
+        totalStaff: staff,
+        totalOrders: orders,
+        totalReservations: reservations,
+        totalProducts: products
+      },
+      sections: {
+        userManagement: {
+          list: "/admin/users",
+          create: "/admin/users/create",
+          update: "/admin/users/:id",
+          delete: "/admin/users/:id"
+        },
+        staffManagement: {
+          list: "/admin/staff",
+          create: "/admin/staff/create",
+          update: "/admin/staff/:id",
+          delete: "/admin/staff/:id"
+        },
+        orderManagement: {
+          list: "/admin/orders",
+          create: "/admin/orders/create",
+          update: "/admin/orders/:id",
+          delete: "/admin/orders/:id"
+        },
+        reservationManagement: {
+          list: "/admin/reservations",
+          create: "/admin/reservations/create",
+          update: "/admin/reservations/:id",
+          delete: "/admin/reservations/:id"
+        },
+        productManagement: {
+          list: "/admin/products",
+          create: "/admin/products/create",
+          update: "/admin/products/:id",
+          delete: "/admin/products/:id"
+        },
+        analytics: {
+          revenue: "/admin/analytics/revenue",
+          popularDishes: "/admin/analytics/popular-dishes",
+          customerSatisfaction: "/admin/analytics/satisfaction",
+          deliveryPerformance: "/admin/analytics/delivery",
+          tableTurnover: "/admin/analytics/turnover"
+        }
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false,
+      msg: "Failed to load dashboard",
+      error: error.message 
+    });
+  }
+};
+
 exports.addUser = async (req, res) => {
   try {
     console.log("Request Body:", req.body);
@@ -13,7 +95,7 @@ exports.addUser = async (req, res) => {
       return res.status(403).json({ msg: "Access denied" });
     const { name, email, password, role } = req.body;
     console.log("Extracted role:", role);
-    if (!["Customer"].includes(role))
+    if (!["Customer,Staff"].includes(role))
       return res.status(400).json({ msg: "Invalid role" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
