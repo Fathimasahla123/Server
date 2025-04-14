@@ -224,6 +224,183 @@ exports.uploadProfileImage = async (req, res) => {
   }
 };
 
+//Order functions
+exports.addOrder = async (req, res) => {
+  try {
+    if (req.user.role !== "Customer")
+      return res.status(403).json({ msg: "Access denied" });
+    const {
+      customerId,
+      staffId,
+      items,
+      totalAmount,
+      orderType,
+      deliveryAddress,
+    } = req.body;
+    const customer = await User.findOne({ _id: customerId, role: "Customer" });
+    if (!customer) {
+      return res.status(400).json({ message: "Invalid customerId" });
+    }
+    const staff = await Staff.findOne({ _id: staffId, role: "Staff" });
+    if (!staff) {
+      return res.status(400).json({ message: "Invalid staffId" });
+    }
+    const order = new Order({
+      customerId,
+      staffId,
+      items,
+      totalAmount,
+      orderType,
+      deliveryAddress,
+      createdBy: req.user._id,
+    });
+    await order.save();
+    res.status(201).json({ msg: "order created successfully", order });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ msg: "Internal server error", error: error.message });
+  }
+};
+
+exports.viewOrder = async (req, res) => {
+  try {
+    if (req.user.role !== "Customer")
+      return res.status(403).json({ msg: "Access denied" });
+    const order = await Order.findById(req.params.id);
+    if (!order) return res.status(404).json({ message: "Order not found" });
+    res.json({ order });
+  } catch (error) {
+    res.status(500).json({ msg: "Server error", error: error.message });
+  }
+};
+
+exports.listOrders = async (req, res) => {
+  try {
+    if (req.user.role !== "Customer")
+      return res.status(403).json({ msg: "Access denied" });
+    const order = await Order.find();
+    res.json({ order });
+  } catch (error) {
+    res.status(500).json({ msg: "Server error", error: error.message });
+  }
+};
+
+exports.updateOrder = async (req, res) => {
+  try {
+    if (req.user.role !== "Customer")
+      return res.status(403).json({ msg: "Access denied" });
+    const order = await Order.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+    if (!order) return res.status(404).json({ message: "Order not found" });
+    res.json({ message: " Order updated successfully", order });
+  } catch (error) {
+    res.status(500).json({ msg: "Server error", error: error.message });
+  }
+};
+
+exports.deleteOrder = async (req, res) => {
+  try {
+    if (req.user.role !== "Customer")
+      return res.status(403).json({ msg: "Access denied" });
+    const order = await Order.findByIdAndDelete(req.params.id);
+    if (!order) return res.status(404).json({ message: "Order not found" });
+    res.json({ message: " Order deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ msg: "Server error", error: error.message });
+  }
+};
+
+//Reservation functions
+
+exports.addReservation = async (req, res) => {
+  try {
+    if (req.user.role !== "Customer")
+      return res.status(403).json({ msg: "Access denied" });
+    const { customerName, customerId, date, time, guests, specialRequests } =
+      req.body;
+    const customer = await User.findOne({ _id: customerId, role: "Customer" });
+    if (!customer) {
+      return res.status(400).json({ message: "Invalid customerId" });
+    }
+
+    const reservation = new Reservation({
+      customerName,
+      customerId,
+      date,
+      time,
+      guests,
+      specialRequests,
+      createdBy: req.user._id,
+    });
+    await reservation.save();
+    res
+      .status(201)
+      .json({ msg: "reservation created successfully", reservation });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ msg: "Internal server error", error: error.message });
+  }
+};
+
+exports.viewReservation = async (req, res) => {
+  try {
+    if (req.user.role !== "Customer")
+      return res.status(403).json({ msg: "Access denied" });
+    const reservation = await Reservation.findById(req.params.id);
+    if (!reservation)
+      return res.status(404).json({ message: "Reservation not found" });
+    res.json({ reservation });
+  } catch (error) {
+    res.status(500).json({ msg: "Server error", error: error.message });
+  }
+};
+
+exports.listReservations = async (req, res) => {
+  try {
+    if (req.user.role !== "Customer")
+      return res.status(403).json({ msg: "Access denied" });
+    const reservation = await Reservation.find();
+    res.status(200).json({ success: true, reservation });
+  } catch (error) {
+    res.status(500).json({ msg: "Server error", error: error.message });
+  }
+};
+
+exports.updateReservation = async (req, res) => {
+  try {
+    if (req.user.role !== "Customer")
+      return res.status(403).json({ msg: "Access denied" });
+    const reservation = await Reservation.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {
+        new: true,
+      }
+    );
+    if (!reservation)
+      return res.status(404).json({ message: "Reservation not found" });
+    res.json({ message: " Reservation updated successfully", reservation });
+  } catch (error) {
+    res.status(500).json({ msg: "Server error", error: error.message });
+  }
+};
+
+exports.deleteReservation = async (req, res) => {
+  try {
+    if (req.user.role !== "Customer")
+      return res.status(403).json({ msg: "Access denied" });
+    const reservation = await Reservation.findByIdAndDelete(req.params.id);
+    if (!reservation)
+      return res.status(404).json({ message: "Reservation not found" });
+    res.json({ message: " Reservation deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ msg: "Server error", error: error.message });
+  }
+};
+
 exports.submitFeedback = async (req, res) => {
   try {
     if (req.user.role !== "Customer")

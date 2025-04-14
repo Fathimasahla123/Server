@@ -3,7 +3,7 @@ const router = express.Router();
 const  authMiddleware = require("../middleware/authMiddleware");
 const adminController = require("../controllers/adminController");
 
-router.get('/adminDashboard', authMiddleware,adminController.adminDashboard);
+//router.get('/adminDashboard', authMiddleware,adminController.adminDashboard);
 //Customer endpoints;
 router.post("/add-user", authMiddleware, adminController.addUser);
 router.get("/view-user/:id",authMiddleware,adminController.viewUser);
@@ -19,18 +19,18 @@ router.put("/update-staff/:id",authMiddleware,adminController.updateStaff);
 router.delete("/delete-staff/:id",authMiddleware, adminController.deleteStaff);
 
 //Order endpoints
-router.post("/add-order", authMiddleware, adminController.addOrder);
-router.get("/view-order/:id",authMiddleware, adminController.viewOrder);
-router.get("/list-orders",authMiddleware, adminController.listOrders);
-router.put("/update-order/:id", authMiddleware,adminController.updateOrder);
-router.delete("/delete-order/:id",authMiddleware, adminController.deleteOrder);
+// router.post("/add-order", authMiddleware, adminController.addOrder);
+// router.get("/view-order/:id",authMiddleware, adminController.viewOrder);
+ router.get("/list-orders",authMiddleware, adminController.listOrders);
+// router.put("/update-order/:id", authMiddleware,adminController.updateOrder);
+// router.delete("/delete-order/:id",authMiddleware, adminController.deleteOrder);
 
-//Reservation endpoints
-router.post("/add-reservation",authMiddleware, adminController.addReservation);
-router.get("/view-reservation/:id",authMiddleware, adminController.viewReservation);
+// //Reservation endpoints
+// router.post("/add-reservation",authMiddleware, adminController.addReservation);
+// router.get("/view-reservation/:id",authMiddleware, adminController.viewReservation);
 router.get("/list-reservations", authMiddleware, adminController.listReservations);
-router.put("/update-reservation/:id", authMiddleware,  adminController.updateReservation);
-router.delete("/delete-reservation/:id",authMiddleware,  adminController.deleteReservation);
+// router.put("/update-reservation/:id", authMiddleware,  adminController.updateReservation);
+// router.delete("/delete-reservation/:id",authMiddleware,  adminController.deleteReservation);
 
 
 
