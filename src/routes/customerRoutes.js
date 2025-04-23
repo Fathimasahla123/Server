@@ -9,12 +9,15 @@ router.post("/customer-login",authMiddleware, customerController.loginCustomer);
 
 router.put("/change-password", authMiddleware, customerController.changePassword);
 router.put("/update-profile", authMiddleware, customerController.updateProfile);
-router.get("/profile/:id", authMiddleware, customerController.viewProfile);
+router.get("/profile", authMiddleware, customerController.viewProfile);
 router.post("/upload-profile", authMiddleware, uploadMiddleware.single("profileImage") ,customerController.uploadProfileImage);
+
+router.get("/list-staffs",authMiddleware, customerController.listStaffs);
 
 //Order endpoints
 router.post("/add-order", authMiddleware, customerController.addOrder);
 router.get("/view-order/:id",authMiddleware, customerController.viewOrder);
+router.get("/my-orders",authMiddleware, customerController.getMyOrders);
 router.get("/list-orders",authMiddleware, customerController.listOrders);
 router.put("/update-order/:id", authMiddleware, customerController.updateOrder);
 router.delete("/delete-order/:id",authMiddleware, customerController.deleteOrder);
@@ -22,13 +25,17 @@ router.delete("/delete-order/:id",authMiddleware, customerController.deleteOrder
 //Reservation endpoints
 router.post("/add-reservation",authMiddleware, customerController.addReservation);
 router.get("/view-reservation/:id",authMiddleware, customerController.viewReservation);
+router.get("/my-reservations",authMiddleware, customerController.getMyReservations);
 router.get("/list-reservations", authMiddleware, customerController.listReservations);
 router.put("/update-reservation/:id", authMiddleware,  customerController.updateReservation);
 router.delete("/delete-reservation/:id",authMiddleware,  customerController.deleteReservation);
 
 router.post("/submit-feedback", authMiddleware, customerController.submitFeedback);
-router.get("/order-details/:id", authMiddleware, customerController.viewOrderDetails);
+//router.get("/order-details/:id", authMiddleware, customerController.viewOrderDetails);
 router.get("/feedback", authMiddleware, customerController.viewMyFeedback);
+
+router.get("/get-staffs",authMiddleware, customerController.getStaffs);
+router.get("/list-users",authMiddleware, customerController.listUsers);
 
 module.exports = router;
 

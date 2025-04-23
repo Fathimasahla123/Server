@@ -5,9 +5,9 @@ const masterSchema = new mongoose.Schema(
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: function () {
-        return this.role !== "Admin";
-      },
+      // required: function () {
+      //   return this.role !== "Admin";
+      // },
     },
 
     updatedAt: { type: Date, default: Date.now },

@@ -19,23 +19,15 @@ router.put("/update-staff/:id",authMiddleware,adminController.updateStaff);
 router.delete("/delete-staff/:id",authMiddleware, adminController.deleteStaff);
 
 //Order endpoints
-// router.post("/add-order", authMiddleware, adminController.addOrder);
-// router.get("/view-order/:id",authMiddleware, adminController.viewOrder);
  router.get("/list-orders",authMiddleware, adminController.listOrders);
-// router.put("/update-order/:id", authMiddleware,adminController.updateOrder);
-// router.delete("/delete-order/:id",authMiddleware, adminController.deleteOrder);
 
-// //Reservation endpoints
-// router.post("/add-reservation",authMiddleware, adminController.addReservation);
-// router.get("/view-reservation/:id",authMiddleware, adminController.viewReservation);
+ //Reservation endpoints
 router.get("/list-reservations", authMiddleware, adminController.listReservations);
-// router.put("/update-reservation/:id", authMiddleware,  adminController.updateReservation);
-// router.delete("/delete-reservation/:id",authMiddleware,  adminController.deleteReservation);
-
+router.get("/list-feedbacks", authMiddleware, adminController.listFeedbacks);
 
 
 router.get("/get-available-options", authMiddleware, adminController.getAvailableOptions);
 router.get("/get-customers", authMiddleware, adminController.getCustomers);
 router.get("/get-orders", authMiddleware,  adminController.getOrders);
-router.get("/get-staffs",authMiddleware, adminController.getStaffs);
+
 module.exports = router;

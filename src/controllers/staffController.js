@@ -60,7 +60,10 @@ exports.loginStaff = async (req, res) => {
 
 exports.getStaffOrders = async (req, res) => {
   try {
-    if (req.user.role !== "Staff") {
+    // Check if either req.user (for logged in staff) or req.staff (for admin-created staff)
+    const staffId = req.user?.role === "Staff" ? req.user.id : req.staff?.id;
+    
+    if (!staffId) {
       return res.status(403).json({
         success: false,
         message: "Access denied. Only staff can view orders.",
@@ -71,25 +74,37 @@ exports.getStaffOrders = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
+    // const orders = await Order.find({
+    //   staffId: staffId,
+    //   isActive: true,
+    // })
+    //   .populate({
+    //     path: "customerName",
+    //     // model: "User",
+    //     select: "customerName items",
+    //   })
+    //   // .populate({
+    //   //   path: "feedback",
+    //   //   select: "rating comment",
+    //   // })
+    //   .sort({ createdAt: -1 })
+    //   .skip(skip)
+    //   .limit(limit);
     const orders = await Order.find({
-      staffId: req.user.id,
+      staffId: staffId,
       isActive: true,
     })
-      .populate({
-        path: "customerId",
-        model: "User",
-        select: "name email ",
-      })
-      .populate({
-        path: "feedback",
-        select: "rating comment",
-      })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit);
+    // .populate({
+    //   path: "customerId",  // This should match the field name in your Order model
+    //   select: "name email", // Select only the customer fields you need
+    // })
+    .select("items customerName totalAmount status createdAt") // Select order fields you need
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit);
 
     const totalOrders = await Order.countDocuments({
-      staffId: req.user.id,
+      staffId: staffId,
       isActive: true,
     });
 
@@ -125,9 +140,13 @@ exports.getStaffOrders = async (req, res) => {
   }
 };
 
+// Get feedback for staff (works for both user role "Staff" and admin-created staff)
 exports.getStaffFeedback = async (req, res) => {
   try {
-    if (req.user.role !== "Staff") {
+    // Check if either req.user (for logged in staff) or req.staff (for admin-created staff)
+    const staffId = req.user?.role === "Staff" ? req.user.id : req.staff?.id;
+    
+    if (!staffId) {
       return res.status(403).json({
         success: false,
         message: "Access denied",
@@ -135,7 +154,7 @@ exports.getStaffFeedback = async (req, res) => {
     }
 
     const feedbacks = await Feedback.find({
-      staffId: req.user.id,
+      staffId: staffId,
       isActive: true,
     })
       .populate({
@@ -151,7 +170,7 @@ exports.getStaffFeedback = async (req, res) => {
     const avgRatings = await Feedback.aggregate([
       {
         $match: {
-          staffId: new mongoose.Types.ObjectId(req.user.id),
+          staffId: new mongoose.Types.ObjectId(staffId),
           isActive: true,
         },
       },

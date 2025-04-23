@@ -59,3 +59,53 @@ exports.adminOnly = (req, res, next) => {
 
   next();
 };
+
+
+
+exports.authenticateStaff = async (req, res, next) => {
+  try {
+    const token = req.header("Authorization")?.replace("Bearer ", "");
+    
+    // First try to authenticate as User
+    const user = await User.findOne({ token });
+    if (user?.role === "Staff") {
+      req.user = user;
+      return next();
+    }
+    
+    // Then try to authenticate as Admin-created Staff
+    const staff = await Staff.findOne({ token });
+    if (staff) {
+      req.staff = staff;
+      return next();
+    }
+    
+    throw new Error("Authentication failed");
+  } catch (error) {
+    res.status(401).send({ error: "Please authenticate" });
+  }
+};
+
+exports.auth = async (req, res, next) => {
+  try {
+    const token = req.header("Authorization").replace("Bearer ", "");
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    let user;
+    if (decoded.isStaff) {
+      user = await Staff.findOne({ _id: decoded.id, "tokens.token": token });
+    } else {
+      user = await User.findOne({ _id: decoded.id, "tokens.token": token });
+    }
+
+    if (!user) {
+      throw new Error();
+    }
+
+    req.token = token;
+    req.user = user;
+    next();
+  } catch (e) {
+    res.status(401).send({ error: "Please authenticate" });
+  }
+};
