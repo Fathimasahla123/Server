@@ -7,7 +7,6 @@ const Product = require("../models/productModel");
 const bcrypt = require("bcryptjs");
 const mongoose = require("mongoose");
 
-
 exports.addUser = async (req, res) => {
   try {
     console.log("Request Body:", req.body);
@@ -80,7 +79,7 @@ exports.deleteUser = async (req, res) => {
       return res.status(403).json({ msg: "Access denied" });
     const user = await User.findByIdAndDelete(req.params.id);
     if (!user) return res.status(404).json({ message: "User not found" });
-    res.json({ success:true,  message: " User deleted successfully" });
+    res.json({ success: true, message: " User deleted successfully" });
   } catch (error) {
     res.status(500).json({ msg: "Server error", error: error.message });
   }
@@ -143,26 +142,29 @@ exports.listStaffs = async (req, res) => {
 
     // Fetch from both User and Staff collections
     const [userStaff, adminStaff] = await Promise.all([
-      User.find({ role: "Staff" }).select('-password'),
-      Staff.find({ role: "Staff" })
+      User.find({ role: "Staff" }).select("-password"),
+      Staff.find({ role: "Staff" }),
     ]);
 
     // Combine results with type indicator
     const combinedStaff = [
-      ...userStaff.map(user => ({ ...user.toObject(), staffType: "User" })),
-      ...adminStaff.map(staff => ({ ...staff.toObject(), staffType: "Admin" }))
+      ...userStaff.map((user) => ({ ...user.toObject(), staffType: "User" })),
+      ...adminStaff.map((staff) => ({
+        ...staff.toObject(),
+        staffType: "Admin",
+      })),
     ];
 
     res.status(200).json({
       success: true,
       data: combinedStaff,
-      count: combinedStaff.length
+      count: combinedStaff.length,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: "Server error",
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -170,9 +172,9 @@ exports.listStaffs = async (req, res) => {
 exports.updateStaff = async (req, res) => {
   try {
     if (req.user.role !== "Admin") {
-      return res.status(403).json({ 
+      return res.status(403).json({
         success: false,
-        message: "Access denied" 
+        message: "Access denied",
       });
     }
 
@@ -181,16 +183,12 @@ exports.updateStaff = async (req, res) => {
 
     // Try to update in both collections
     const [updatedUser, updatedStaff] = await Promise.all([
-      User.findOneAndUpdate(
-        { _id: staffId, role: "Staff" },
-        updates,
-        { new: true }
-      ),
-      Staff.findOneAndUpdate(
-        { _id: staffId, role: "Staff" },
-        updates,
-        { new: true }
-      )
+      User.findOneAndUpdate({ _id: staffId, role: "Staff" }, updates, {
+        new: true,
+      }),
+      Staff.findOneAndUpdate({ _id: staffId, role: "Staff" }, updates, {
+        new: true,
+      }),
     ]);
 
     // Determine which update was successful
@@ -206,32 +204,31 @@ exports.updateStaff = async (req, res) => {
     }
 
     if (!updatedRecord) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: "Staff not found" 
+        message: "Staff not found",
       });
     }
 
     // Prepare the response data
     const responseData = {
       ...updatedRecord.toObject(),
-      staffType
+      staffType,
     };
 
     res.status(200).json({
       success: true,
       message: "Staff updated successfully",
-      data: responseData
+      data: responseData,
     });
-
   } catch (error) {
     console.error("Error updating staff:", error);
     res.status(500).json({
       success: false,
       message: "Server error",
-      error: error.message.includes("Cast to ObjectId failed") 
+      error: error.message.includes("Cast to ObjectId failed")
         ? "Invalid staff ID format"
-        : error.message
+        : error.message,
     });
   }
 };
@@ -239,9 +236,9 @@ exports.updateStaff = async (req, res) => {
 exports.deleteStaff = async (req, res) => {
   try {
     if (req.user.role !== "Admin") {
-      return res.status(403).json({ 
+      return res.status(403).json({
         success: false,
-        message: "Access denied" 
+        message: "Access denied",
       });
     }
 
@@ -250,7 +247,7 @@ exports.deleteStaff = async (req, res) => {
     // Try to delete from both collections
     const [deletedUser, deletedStaff] = await Promise.all([
       User.findOneAndDelete({ _id: staffId, role: "Staff" }),
-      Staff.findOneAndDelete({ _id: staffId, role: "Staff" })
+      Staff.findOneAndDelete({ _id: staffId, role: "Staff" }),
     ]);
 
     // Determine which deletion was successful
@@ -266,36 +263,34 @@ exports.deleteStaff = async (req, res) => {
     }
 
     if (!deletedRecord) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         success: false,
-        message: "Staff not found" 
+        message: "Staff not found",
       });
     }
 
     // Prepare the response data
     const responseData = {
       ...deletedRecord.toObject(),
-      staffType
+      staffType,
     };
 
     res.status(200).json({
       success: true,
       message: "Staff deleted successfully",
-      data: responseData
+      data: responseData,
     });
-
   } catch (error) {
     console.error("Error deleting staff:", error);
     res.status(500).json({
       success: false,
       message: "Server error",
-      error: error.message.includes("Cast to ObjectId failed") 
+      error: error.message.includes("Cast to ObjectId failed")
         ? "Invalid staff ID format"
-        : error.message
+        : error.message,
     });
   }
 };
-
 
 exports.listOrders = async (req, res) => {
   try {
@@ -303,15 +298,14 @@ exports.listOrders = async (req, res) => {
       return res.status(403).json({ msg: "Access denied" });
     //const order = await Order.find();
     const order = await Order.find()
-  .populate('customerName', 'name ') // Only include name and email
-  .populate('staffId', 'name ')    // Only include name and email
-  .sort({ createdAt: -1 });
+      .populate("customerName", "name ") // Only include name and email
+      .populate("staffId", "name ") // Only include name and email
+      .sort({ createdAt: -1 });
     res.json({ order });
   } catch (error) {
     res.status(500).json({ msg: "Server error", error: error.message });
   }
 };
-
 
 exports.listReservations = async (req, res) => {
   try {
@@ -512,100 +506,100 @@ exports.getTableTurnoverRate = async (req, res) => {
 };
 
 exports.uploadProduct = async (req, res) => {
-    try {
-        if (req.user.role !== "Admin") {
-            return res.status(403).json({
-                success: false,
-                message: "Access denied.",
-            });
-        }
-
-        const { name, category, price, description, images } = req.body;
-        
-        if (!name || !category || !price || !images || images.length === 0) {
-            return res.status(400).json({
-                success: false,
-                message: "Name, category, price and at least one image are required",
-            });
-        }
-
-        const newProduct = new Product({
-            name,
-            category,
-            images, // Now accepts array of image URLs
-            price: Number(price),
-            description,
-            createdBy: req.user.id,
-        });
-
-        await newProduct.save();
-
-        res.status(201).json({
-            success: true,
-            message: "Product uploaded successfully",
-            product: {
-                id: newProduct._id,
-                name: newProduct.name,
-                category: newProduct.category,
-                price: newProduct.price,
-                images: newProduct.images
-            },
-        });
-    } catch (error) {
-        console.error("Product upload error:", error);
-
-        if (error.name === "ValidationError") {
-            return res.status(400).json({
-                success: false,
-                message: "Validation error",
-                errors: error.errors,
-            });
-        }
-
-        res.status(500).json({
-            success: false,
-            message: "Internal server error",
-            error: error.message,
-        });
+  try {
+    if (req.user.role !== "Admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied.",
+      });
     }
+
+    const { name, category, price, description, images } = req.body;
+
+    if (!name || !category || !price || !images || images.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Name, category, price and at least one image are required",
+      });
+    }
+
+    const newProduct = new Product({
+      name,
+      category,
+      images, // Now accepts array of image URLs
+      price: Number(price),
+      description,
+      createdBy: req.user.id,
+    });
+
+    await newProduct.save();
+
+    res.status(201).json({
+      success: true,
+      message: "Product uploaded successfully",
+      product: {
+        id: newProduct._id,
+        name: newProduct.name,
+        category: newProduct.category,
+        price: newProduct.price,
+        images: newProduct.images,
+      },
+    });
+  } catch (error) {
+    console.error("Product upload error:", error);
+
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        success: false,
+        message: "Validation error",
+        errors: error.errors,
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: "Internal server error",
+      error: error.message,
+    });
+  }
 };
 
 exports.getProducts = async (req, res) => {
-    try {
-        const { category, minPrice, maxPrice, search } = req.query;
-        const filter = {};
+  try {
+    const { category, minPrice, maxPrice, search } = req.query;
+    const filter = {};
 
-        if (category) filter.category = category;
-        if (minPrice || maxPrice) {
-            filter.price = {};
-            if (minPrice) filter.price.$gte = Number(minPrice);
-            if (maxPrice) filter.price.$lte = Number(maxPrice);
-        }
-        if (search) {
-            filter.$or = [
-                { name: { $regex: search, $options: "i" } },
-                { description: { $regex: search, $options: "i" } },
-            ];
-        }
-
-        const products = await Product.find(filter)
-            .select("-__v")
-            .sort({ createdAt: -1 })
-            .lean();
-
-        res.status(200).json({
-            success: true,
-            count: products.length,
-            products,
-        });
-    } catch (error) {
-        console.error("Get products error:", error);
-        res.status(500).json({
-            success: false,
-            message: "Error fetching products",
-            error: error.message,
-        });
+    if (category) filter.category = category;
+    if (minPrice || maxPrice) {
+      filter.price = {};
+      if (minPrice) filter.price.$gte = Number(minPrice);
+      if (maxPrice) filter.price.$lte = Number(maxPrice);
     }
+    if (search) {
+      filter.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const products = await Product.find(filter)
+      .select("-__v")
+      .sort({ createdAt: -1 })
+      .lean();
+
+    res.status(200).json({
+      success: true,
+      count: products.length,
+      products,
+    });
+  } catch (error) {
+    console.error("Get products error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching products",
+      error: error.message,
+    });
+  }
 };
 
 exports.updateProduct = async (req, res) => {
@@ -623,38 +617,35 @@ exports.updateProduct = async (req, res) => {
 };
 
 exports.deleteProduct = async (req, res) => {
-    try {
-        if (req.user.role !== "Admin") {
-            return res.status(403).json({
-                success: false,
-                message: "Access denied.",
-            });
-        }
-
-        const product = await Product.findByIdAndDelete(req.params.id);
-
-        if (!product) {
-            return res.status(404).json({
-                success: false,
-                message: "Product not found",
-            });
-        }
-
-        // Optional: Delete images from storage
-        // You would need to implement this based on your storage solution
-
-        res.status(200).json({
-            success: true,
-            message: "Product deleted successfully",
-        });
-    } catch (error) {
-        console.error("Delete product error:", error);
-        res.status(500).json({
-            success: false,
-            message: "Error deleting product",
-            error: error.message,
-        });
+  try {
+    if (req.user.role !== "Admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied.",
+      });
     }
+
+    const product = await Product.findByIdAndDelete(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Product deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete product error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error deleting product",
+      error: error.message,
+    });
+  }
 };
 
 exports.listFeedbacks = async (req, res) => {

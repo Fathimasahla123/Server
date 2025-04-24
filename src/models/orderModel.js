@@ -3,7 +3,6 @@ const masterSchema = require("./masterModel");
 
 const orderSchema = new mongoose.Schema({
   ...masterSchema.obj,
-  //customerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   customerName: {type: String, required: true  },
   staffId: { type: mongoose.Schema.Types.ObjectId, ref: 'Staff', required: true },
   items: [
@@ -17,7 +16,6 @@ const orderSchema = new mongoose.Schema({
   orderType: { type: String, enum: ['Delivery', 'Pickup'],default: 'Delivery', required: true },
   deliveryAddress: { type: String }, // Only for delivery orders
   status: { type: String, enum: ['Pending', 'Preparing', 'Ready', 'Delivered'], default: 'Pending' },
- // feedback: { type: mongoose.Schema.Types.ObjectId, ref: 'Feedback' },
   createdAt: { type: Date, default: Date.now },
 });
 

@@ -14,17 +14,19 @@ exports.signup = async (req, res) => {
     }
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    user= new User({
+    user = new User({
       name,
       email,
       password: hashedPassword,
-      role ,
+      role,
       createdBy: null,
     });
     await user.save();
-    res.status(201).json({ success: true,  msg: "signup successfull", user});
+    res.status(201).json({ success: true, msg: "signup successfull", user });
   } catch (error) {
-    res.status(500).json({ msg: "Internal Server error", error: error.message});
+    res
+      .status(500)
+      .json({ msg: "Internal Server error", error: error.message });
   }
 };
 
@@ -43,7 +45,9 @@ exports.login = async (req, res) => {
     }
 
     if (!user) {
-      return res.status(404).json({ success: false, message: "User does not exist" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User does not exist" });
     }
 
     // const isMatch = await bcrypt.compare(password, user.password);
@@ -54,15 +58,17 @@ exports.login = async (req, res) => {
     // Determine the role - prioritize the role field, fallback to isStaff
     const role = user.role || (isStaff ? "Staff" : null);
     if (!role) {
-      return res.status(403).json({ success: false, message: "User role not defined" });
+      return res
+        .status(403)
+        .json({ success: false, message: "User role not defined" });
     }
 
     const token = jwt.sign(
-      { 
-        id: user._id, 
+      {
+        id: user._id,
         role: role,
         email: user.email,
-        isStaff: isStaff // Add this flag to distinguish staff types
+        isStaff: isStaff, // Add this flag to distinguish staff types
       },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
@@ -75,18 +81,16 @@ exports.login = async (req, res) => {
         name: user.name,
         email: user.email,
         role: role,
-        isStaff: isStaff
+        isStaff: isStaff,
       },
-      token
+      token,
     });
-
   } catch (err) {
     console.error("Login error:", err);
-    res.status(500).json({ 
+    res.status(500).json({
       success: false,
       message: "Server error",
-      error: err.message 
+      error: err.message,
     });
   }
 };
-

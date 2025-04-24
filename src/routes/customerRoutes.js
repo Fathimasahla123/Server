@@ -31,7 +31,7 @@ router.put("/update-reservation/:id", authMiddleware,  customerController.update
 router.delete("/delete-reservation/:id",authMiddleware,  customerController.deleteReservation);
 
 router.post("/submit-feedback", authMiddleware, customerController.submitFeedback);
-//router.get("/order-details/:id", authMiddleware, customerController.viewOrderDetails);
+
 router.get("/feedback", authMiddleware, customerController.viewMyFeedback);
 
 router.get("/get-staffs",authMiddleware, customerController.getStaffs);
