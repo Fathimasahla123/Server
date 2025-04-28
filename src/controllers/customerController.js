@@ -599,26 +599,3 @@ exports.viewMyFeedback = async (req, res) => {
     });
   }
 };
-
-exports.getStaffs = async (req, res) => {
-  try {
-    if (req.user.role !== "Customer")
-      return res.status(403).json({ msg: "Access denied" });
-    const staffs = await User.find({ role: "Staff" });
-    res.json(staffs);
-  } catch (error) {
-    console.error("Error fetching staffs:", error);
-    res.status(500).json({ msg: "Server error", error: error.message });
-  }
-};
-
-exports.listUsers = async (req, res) => {
-  try {
-    if (req.user.role !== "Customer")
-      return res.status(403).json({ msg: "Access denied" });
-    const user = await User.find();
-    res.json({ user });
-  } catch (error) {
-    res.status(500).json({ msg: "Server error", error: error.message });
-  }
-};
