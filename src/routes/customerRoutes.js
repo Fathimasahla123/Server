@@ -34,8 +34,5 @@ router.post("/submit-feedback", authMiddleware, customerController.submitFeedbac
 
 router.get("/feedback", authMiddleware, customerController.viewMyFeedback);
 
-router.get("/get-staffs",authMiddleware, customerController.getStaffs);
-router.get("/list-users",authMiddleware, customerController.listUsers);
-
 module.exports = router;
 
