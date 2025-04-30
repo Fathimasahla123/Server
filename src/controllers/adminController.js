@@ -306,6 +306,31 @@ exports.listOrders = async (req, res) => {
     res.status(500).json({ msg: "Server error", error: error.message });
   }
 };
+exports.updateOrder = async (req, res) => {
+  try {
+    if (req.user.role !== "Admin")
+      return res.status(403).json({ msg: "Access denied" });
+    const order = await Order.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
+    if (!order) return res.status(404).json({ message: "Order not found" });
+    res.json({ message: " Order updated successfully", order });
+  } catch (error) {
+    res.status(500).json({ msg: "Server error", error: error.message });
+  }
+};
+
+exports.deleteOrder = async (req, res) => {
+  try {
+    if (req.user.role !== "Admin")
+      return res.status(403).json({ msg: "Access denied" });
+    const order = await Order.findByIdAndDelete(req.params.id);
+    if (!order) return res.status(404).json({ message: "Order not found" });
+    res.json({ message: " Order deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ msg: "Server error", error: error.message });
+  }
+};
 
 exports.listReservations = async (req, res) => {
   try {
@@ -313,6 +338,38 @@ exports.listReservations = async (req, res) => {
       return res.status(403).json({ msg: "Access denied" });
     const reservation = await Reservation.find();
     res.status(200).json({ success: true, reservation });
+  } catch (error) {
+    res.status(500).json({ msg: "Server error", error: error.message });
+  }
+};
+
+exports.updateReservation = async (req, res) => {
+  try {
+    if (req.user.role !== "Admin")
+      return res.status(403).json({ msg: "Access denied" });
+    const reservation = await Reservation.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      {
+        new: true,
+      }
+    );
+    if (!reservation)
+      return res.status(404).json({ message: "Reservation not found" });
+    res.json({ message: " Reservation updated successfully", reservation });
+  } catch (error) {
+    res.status(500).json({ msg: "Server error", error: error.message });
+  }
+};
+
+exports.deleteReservation = async (req, res) => {
+  try {
+    if (req.user.role !== "Admin")
+      return res.status(403).json({ msg: "Access denied" });
+    const reservation = await Reservation.findByIdAndDelete(req.params.id);
+    if (!reservation)
+      return res.status(404).json({ message: "Reservation not found" });
+    res.json({ message: " Reservation deleted successfully" });
   } catch (error) {
     res.status(500).json({ msg: "Server error", error: error.message });
   }

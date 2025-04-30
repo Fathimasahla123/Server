@@ -20,9 +20,15 @@ router.delete("/delete-staff/:id",authMiddleware, adminController.deleteStaff);
 
 //Order endpoints
  router.get("/list-orders",authMiddleware, adminController.listOrders);
+ router.put("/update-order/:id", authMiddleware, adminController.updateOrder);
+ router.delete("/delete-order/:id",authMiddleware, adminController.deleteOrder);
 
  //Reservation endpoints
 router.get("/list-reservations", authMiddleware, adminController.listReservations);
+router.put("/update-reservation/:id", authMiddleware,  adminController.updateReservation);
+router.delete("/delete-reservation/:id",authMiddleware,  adminController.deleteReservation);
+
+
 router.get("/list-feedbacks", authMiddleware, adminController.listFeedbacks);
 
 
