@@ -37,7 +37,7 @@ exports.loginCustomer = async (req, res) => {
         email: customer.email,
       },
       process.env.JWT_SECRET,
-      { expiresIn: "7d" }
+      { expiresIn: "7d" },
     );
 
     res.status(200).json({
@@ -154,9 +154,9 @@ exports.updateProfile = async (req, res) => {
 exports.viewProfile = async (req, res) => {
   try {
     if (req.user.role !== "Customer") {
-      return res.status(403).json({ 
+      return res.status(403).json({
         success: false,
-        message: "Access denied" 
+        message: "Access denied",
       });
     }
 
@@ -175,12 +175,12 @@ exports.viewProfile = async (req, res) => {
     // Add profileImageUrl if it exists
     const profileData = {
       ...customer,
-      profileImageUrl: customer.profileImageUrl || null
+      profileImageUrl: customer.profileImageUrl || null,
     };
 
     res.status(200).json({
       success: true,
-      data: profileData
+      data: profileData,
     });
   } catch (error) {
     console.error("Profile view error:", error);
@@ -191,7 +191,6 @@ exports.viewProfile = async (req, res) => {
     });
   }
 };
-
 
 exports.uploadProfileImage = async (req, res) => {
   try {
@@ -228,7 +227,6 @@ exports.uploadProfileImage = async (req, res) => {
   }
 };
 
-
 exports.listStaffs = async (req, res) => {
   try {
     if (req.user.role !== "Customer") {
@@ -237,26 +235,29 @@ exports.listStaffs = async (req, res) => {
 
     // Fetch from both User and Staff collections
     const [userStaff, adminStaff] = await Promise.all([
-      User.find({ role: "Staff" }).select('-password'),
-      Staff.find({ role: "Staff" })
+      User.find({ role: "Staff" }).select("-password"),
+      Staff.find({ role: "Staff" }),
     ]);
 
     // Combine results with type indicator
     const combinedStaff = [
-      ...userStaff.map(user => ({ ...user.toObject(), staffType: "User" })),
-      ...adminStaff.map(staff => ({ ...staff.toObject(), staffType: "Admin" }))
+      ...userStaff.map((user) => ({ ...user.toObject(), staffType: "User" })),
+      ...adminStaff.map((staff) => ({
+        ...staff.toObject(),
+        staffType: "Admin",
+      })),
     ];
 
     res.status(200).json({
       success: true,
       data: combinedStaff,
-      count: combinedStaff.length
+      count: combinedStaff.length,
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       message: "Server error",
-      error: error.message
+      error: error.message,
     });
   }
 };
@@ -274,10 +275,16 @@ exports.addOrder = async (req, res) => {
       orderType,
       deliveryAddress,
     } = req.body;
-    const staff = await Staff.findOne({  role: "Staff" });
-    if (!staff) {
-      return res.status(400).json({ message: "Invalid staffId" });
+
+
+    const staff = await User.findById(staffId);
+
+    if (!staff || staff.role !== "Staff") {
+      return res.status(400).json({
+        message: "Invalid staff",
+      });
     }
+
     const order = new Order({
       customerName,
       staffId,
@@ -310,43 +317,49 @@ exports.viewOrder = async (req, res) => {
 
 exports.getMyOrders = async (req, res) => {
   try {
-    if (req.user.role !==  "Customer")
+    if (req.user.role !== "Customer")
       return res.status(403).json({ msg: "Access denied" });
     const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
-  const skip = (page - 1) * limit;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
-  const orders = await Order.find({ customerName: req.user.name, isActive: true })
-    .populate('staffId', 'name email')
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limit)
-    .lean();
-
-  const total = await Order.countDocuments({ customerName: req.user.name, isActive: true });
-
-  res.json({
-    success: true,
-    count: orders.length,
-    data: orders,
-    pagination: {
-      currentPage: page,
-      totalPages: Math.ceil(total / limit),
-      totalItems: total,
-      itemsPerPage: limit
-    } 
+    const orders = await Order.find({
+      customerName: req.user.name,
+      isActive: true,
     })
-  }catch (error) {
-      res.status(500).json({ msg: "Server error", error: error.message });
+      .populate("staffId", "name email")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    const total = await Order.countDocuments({
+      customerName: req.user.name,
+      isActive: true,
+    });
+
+    res.json({
+      success: true,
+      count: orders.length,
+      data: orders,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        itemsPerPage: limit,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ msg: "Server error", error: error.message });
   }
-}
+};
 
 exports.listOrders = async (req, res) => {
   try {
-    if (req.user.role !==  "Customer")
+    if (req.user.role !== "Customer")
       return res.status(403).json({ msg: "Access denied" });
-   const order = await Order.find();
-    res.json({ order});
+    const order = await Order.find();
+    res.json({ order });
   } catch (error) {
     res.status(500).json({ msg: "Server error", error: error.message });
   }
@@ -425,36 +438,42 @@ exports.viewReservation = async (req, res) => {
 };
 exports.getMyReservations = async (req, res) => {
   try {
-    if (req.user.role !==  "Customer")
+    if (req.user.role !== "Customer")
       return res.status(403).json({ msg: "Access denied" });
     const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 10;
-  const skip = (page - 1) * limit;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
-  const reservations = await Reservation.find({ customerName: req.user.name, isActive: true })
-    .populate('date', 'guests')
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limit)
-    .lean();
-
-  const total = await Reservation.countDocuments({ customerName: req.user.name, isActive: true });
-
-  res.json({
-    success: true,
-    count: reservations.length,
-    data: reservations,
-    pagination: {
-      currentPage: page,
-      totalPages: Math.ceil(total / limit),
-      totalItems: total,
-      itemsPerPage: limit
-    } 
+    const reservations = await Reservation.find({
+      customerName: req.user.name,
+      isActive: true,
     })
-  }catch (error) {
-      res.status(500).json({ msg: "Server error", error: error.message });
+      .populate("date", "guests")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    const total = await Reservation.countDocuments({
+      customerName: req.user.name,
+      isActive: true,
+    });
+
+    res.json({
+      success: true,
+      count: reservations.length,
+      data: reservations,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+        itemsPerPage: limit,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ msg: "Server error", error: error.message });
   }
-}
+};
 exports.listReservations = async (req, res) => {
   try {
     if (req.user.role !== "Customer")
@@ -475,7 +494,7 @@ exports.updateReservation = async (req, res) => {
       req.body,
       {
         new: true,
-      }
+      },
     );
     if (!reservation)
       return res.status(404).json({ message: "Reservation not found" });
